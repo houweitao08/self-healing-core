@@ -663,6 +663,7 @@ def main():
                         help="运行模式: auto=自动修复, check=仅检查, report=仅报告")
     parser.add_argument("--db", default=DEFAULT_DB_PATH, help="数据库路径")
     parser.add_argument("--json", action="store_true", help="JSON 格式输出")
+    parser.add_argument("--verbose", "-v", action="store_true", help="详细输出，显示每阶段决策")
     args = parser.parse_args()
 
     core = HealCore(db_path=args.db)
@@ -701,6 +702,36 @@ def main():
         print(f"\n{'='*50}")
         print(f"  自愈核心 — {args.mode} 模式")
         print(f"{'='*50}")
+
+        # ── Verbose: 详细阶段输出 ──
+        if args.verbose and args.mode != "report":
+            s = result.get("snapshot")
+            if s and hasattr(s, "__dataclass_fields__"):
+                print(f"\n── 感知阶段 ──")
+                print(f"  内存: {s.memory_percent:.0f}%  ({s.details.get('memory_level', '?')})")
+                print(f"  磁盘: {s.disk_percent:.0f}%  ({s.details.get('disk_level', '?')})")
+                print(f"  API超时(5min): {s.api_timeout_count}")
+                print(f"  滑动失败率: {s.failure_rate:.1%}")
+                print(f"  综合判定: {s.status.upper()}")
+            cb = result.get("circuit_metrics", {})
+            if cb:
+                print(f"\n── 保护阶段 ──")
+                print(f"  熔断器: {cb.get('state', '?')}")
+                print(f"  允许执行: {'✅' if cb.get('allowed', True) else '❌'}")
+                print(f"  历史失败: {cb.get('failure_count', 0)}")
+            actions = result.get("actions", [])
+            if actions:
+                print(f"\n── 修复阶段 ({len(actions)} 个动作) ──")
+                for a in actions:
+                    icon = "✅" if a.success else "❌"
+                    print(f"  {icon} [{a.action_type}] {a.description}")
+            else:
+                print(f"\n── 修复阶段 ──")
+                print(f"  无需修复")
+            print(f"\n── 耗时 ──")
+            print(f"  {result.get('duration_ms', 0):.0f}ms")
+
+        # ── 常规输出 ──
         if args.mode == "report":
             r = result
             print(f"\n最近快照 ({len(r['latest_snapshots'])}):")
