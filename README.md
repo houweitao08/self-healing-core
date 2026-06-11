@@ -10,6 +10,22 @@ Three-layer architecture: **Perceive → Protect → Repair**.
 
 Zero external dependencies. Pure Python stdlib. One file. ~500 lines.
 
+## 🎬 先看一个故障场景
+
+想 3 分钟理解这套系统有什么用？看这个：
+
+[**内存泄漏 → API 超时 → 全链路自愈**](docs/scenario-memory-leak.md)
+
+一个虚构但真实的故障场景，演示 L1→L2→L3 三层接力：感知→预警→熔断→诊断→学习→闭环。第一次修复耗时 120 分钟，第二次仅 35 分钟。
+
+附赠可运行的模拟脚本：
+
+```bash
+python3 scripts/scenario_simulator.py        # 查看模拟报告
+python3 scripts/scenario_simulator.py -v     # 查看 L1 详细输出
+python3 scripts/scenario_simulator.py --clean  # 清理模拟数据
+```
+
 ## Quick Start
 
 ```bash
